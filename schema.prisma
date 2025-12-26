@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum PriceType {
+  FIXED
+  HOURLY
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String
+  role          Role     @default(EMPLOYEE)
+  employee      Employee?
+  createdAt     DateTime @default(now())
+}
+
+model Employee {
+  id            Int         @id @default(autoincrement())
+  name          String
+  monthlyCost   Decimal     @db.Decimal(12, 2)
+  hoursPerMonth Int         @default(160)
+  userId        Int?        @unique
+  user          User?       @relation(fields: [userId], references: [id])
+  timeEntries   TimeEntry[]
+  createdAt     DateTime    @default(now())
+}
+
+model Project {
+  id          Int         @id @default(autoincrement())
+  name        String
+  priceType   PriceType
+  priceValue  Decimal     @db.Decimal(12, 2)
+  timeEntries TimeEntry[]
+  createdAt   DateTime    @default(now())
+}
+
+model TimeEntry {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  projectId  Int
+  entryDate  DateTime
+  hours      Decimal  @db.Decimal(5, 2)
+  note       String?
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  project    Project  @relation(fields: [projectId], references: [id])
+  createdAt  DateTime @default(now())
+}
